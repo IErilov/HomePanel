@@ -1,0 +1,11 @@
+services:
+  home-panel:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hp-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on:
+      - app
