@@ -77,8 +77,8 @@ storage_data/
 uploads/
 media/
 
-backups/
-backup/
+backups/*
+!backups/.gitkeep
 *.backup
 *.dump
 *.sql.gz
