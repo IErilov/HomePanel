@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#10182C"/><stop offset="1" stop-color="#202443"/></linearGradient></defs>
+<rect width="64" height="64" rx="15" fill="url(#bg)"/>
+<g transform="translate(3 2) scale(.91)">
+  <defs>
+    <linearGradient id="roof" x1="8" y1="8" x2="56" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0798F5"/><stop offset=".52" stop-color="#2867F5"/><stop offset="1" stop-color="#7650F5"/>
+    </linearGradient>
+    <linearGradient id="cloud" x1="17" y1="34" x2="49" y2="54" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#DCE8FF"/>
+    </linearGradient>
+  </defs>
+  <path d="M9 29.5 29.1 11a4.5 4.5 0 0 1 5.8 0L55 29.5v20a5 5 0 0 1-5 5h-6.2" stroke="url(#roof)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M17.5 34.5 32 21.8l14.5 12.7" stroke="url(#roof)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity=".95"/>
+  <path d="M15.5 45.5c0-5.1 4.1-9.2 9.2-9.2 1.4-6.1 6.8-10.4 13.1-10.4 7.2 0 13 5.8 13 13h.4a7.2 7.2 0 1 1 0 14.4H24.7a9.2 9.2 0 0 1-9.2-7.8Z" fill="url(#cloud)"/>
+</g></svg>

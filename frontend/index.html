@@ -3,9 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f6f8fa" />
+    <meta name="theme-color" content="#f5f7f5" />
+    <script>
+      (() => {
+        try {
+          const theme = localStorage.getItem('hp_theme') === 'dark' ? 'dark' : 'light'
+          document.documentElement.dataset.theme = theme
+          document.documentElement.style.colorScheme = theme
+        } catch (_) {
+          document.documentElement.dataset.theme = 'light'
+        }
+      })()
+    </script>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="description" content="Home portal by Erilov Ilya — файловое пространство." />
-    <title>Home portal by Erilov Ilya</title>
+    <title>Home Portal — by Erilov Ilya</title>
   </head>
   <body>
     <div id="app"></div>

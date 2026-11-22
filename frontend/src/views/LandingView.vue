@@ -6,9 +6,10 @@ import { api, errorMessage } from '../api'
 import type { Bucket } from '../types'
 
 const buckets = ref<Bucket[]>([])
+const normalizeBucketType = (value: string | null | undefined) => (value || '').trim().toUpperCase()
 const loading = ref(true)
 const error = ref('')
-const openBuckets = computed(() => buckets.value.filter(bucket => bucket.bucket_type === 'OPEN'))
+const openBuckets = computed(() => buckets.value.filter(bucket => normalizeBucketType(bucket.bucket_type) === 'OPEN'))
 
 onMounted(async () => {
   try {
@@ -79,7 +80,7 @@ onMounted(async () => {
     </main>
 
     <footer class="landing-footer">
-      <span class="footer-brand"><Cloud :size="16" /> HOME PANEL</span>
+      <span class="footer-brand"><img src="/brand-mark.svg" alt="" /> HOME PORTAL</span>
       <span>Простое пространство для ваших файлов</span>
       <span>© {{ new Date().getFullYear() }}</span>
     </footer>

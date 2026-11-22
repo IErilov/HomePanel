@@ -1,10 +1,9 @@
 from enum import Enum as PyEnum
 
 from sqlalchemy import String, Boolean, Enum
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from db.database import Base
-
 
 class AccountType(PyEnum):
     SUPER_USER = "super_user"
@@ -41,6 +40,10 @@ class User(Base):
         Boolean,
         nullable=False,
         default=False,
+    )
+
+    events: Mapped[list["Events"]] = relationship(
+        back_populates="user"
     )
 
     def __str__(self) -> str:

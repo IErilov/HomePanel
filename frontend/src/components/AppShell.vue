@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { Files, LogIn, LogOut, Moon, PanelsTopLeft, Sun, UserRound } from 'lucide-vue-next'
+import { Files, LogIn, LogOut, Moon, Sun, UserRound } from 'lucide-vue-next'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
@@ -13,7 +13,11 @@ const pageTitle = computed(() => route.name === 'files' ? 'Файловое пр
 function toggleTheme() {
   dark.value = !dark.value
   localStorage.setItem('hp_theme', dark.value ? 'dark' : 'light')
-  document.documentElement.dataset.theme = dark.value ? 'dark' : 'light'
+  const root = document.documentElement
+  root.classList.add('theme-changing')
+  root.dataset.theme = dark.value ? 'dark' : 'light'
+  root.style.colorScheme = dark.value ? 'dark' : 'light'
+  window.setTimeout(() => root.classList.remove('theme-changing'), 280)
 }
 
 function logout() {
@@ -23,12 +27,7 @@ function logout() {
 
 onMounted(() => {
   document.documentElement.dataset.theme = dark.value ? 'dark' : 'light'
-  if (auth.isAuthenticated() && !auth.user) {
-    auth.fetchMe().catch(() => {
-      auth.logout()
-      router.push('/login')
-    })
-  }
+  document.documentElement.style.colorScheme = dark.value ? 'dark' : 'light'
 })
 </script>
 
@@ -36,12 +35,14 @@ onMounted(() => {
   <div class="app-shell">
     <aside class="sidebar">
       <RouterLink to="/app" class="brand">
+        <span class="brand-mark"><img src="/brand-mark.svg" alt="" /></span>
         <span class="brand-copy">
           <strong>Home portal</strong>
           <small>by Erilov Ilya</small>
         </span>
       </RouterLink>
 
+      <p class="side-caption">РАБОЧЕЕ ПРОСТРАНСТВО</p>
       <nav class="side-nav">
         <RouterLink to="/app" class="side-link" :class="{ active: route.name === 'files' }">
           <Files :size="18" /> Файловое пространство
@@ -63,13 +64,27 @@ onMounted(() => {
     <main class="main-area">
       <header class="topbar">
         <RouterLink to="/app" class="mobile-brand">
-          <span class="brand-mark"><PanelsTopLeft :size="17" /></span>
+          <span class="brand-mark"><img src="/brand-mark.svg" alt="" /></span>
           <span><strong>Home portal</strong><small>by Erilov Ilya</small></span>
         </RouterLink>
-        <div class="breadcrumbs"></div>
+        <div class="breadcrumbs"><span>Home portal</span><span>/</span><strong>{{ pageTitle }}</strong></div>
         <div class="top-actions">
-          <button class="icon-button" @click="toggleTheme" :aria-label="dark ? 'Светлая тема' : 'Тёмная тема'">
-            <Sun v-if="dark" :size="17" /><Moon v-else :size="17" />
+          <button
+            class="theme-toggle"
+            :class="{ 'is-dark': dark }"
+            type="button"
+            @click="toggleTheme"
+            :aria-label="dark ? 'Переключить на светлую тему' : 'Переключить на тёмную тему'"
+            :aria-pressed="dark"
+            title="Сменить тему"
+          >
+            <span class="theme-toggle-track" aria-hidden="true">
+              <span class="theme-toggle-thumb">
+                <Moon v-if="dark" :size="14" class="theme-icon moon-icon" />
+                <Sun v-else :size="14" class="theme-icon sun-icon" />
+              </span>
+              <span class="theme-stars" aria-hidden="true">✦</span>
+            </span>
           </button>
           <span v-if="auth.user" class="top-user"><UserRound :size="16" /> {{ auth.user.name }}</span>
           <RouterLink v-else to="/login" class="top-login">Войти</RouterLink>

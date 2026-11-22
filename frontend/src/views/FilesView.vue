@@ -8,12 +8,13 @@ import { useAuthStore } from '../stores/auth.ts'
 import type { Bucket, BucketsResponse, BucketFilesResponse, StoredFile } from '../types.ts'
 
 const auth = useAuthStore()
+const normalizeBucketType = (value: string | null | undefined) => (value || '').trim().toUpperCase()
 const route = useRoute()
 const router = useRouter()
 const buckets = ref<Bucket[]>([])
 const activeBucketId = ref('')
 const activeBucket = computed(() => buckets.value.find(bucket => bucket.id === activeBucketId.value) || null)
-const isOpen = computed(() => activeBucket.value?.bucket_type === 'OPEN')
+const isOpen = computed(() => normalizeBucketType(activeBucket.value?.bucket_type) === 'OPEN')
 const data = ref<BucketFilesResponse | null>(null)
 const files = computed(() => data.value?.files || [])
 const search = ref('')
@@ -53,7 +54,7 @@ const iconFor = (name: string) => {
   return File
 }
 const isAdmin = computed(() => auth.user?.role === 'super_user')
-const canManage = computed(() => !!activeBucket.value && (activeBucket.value.bucket_type === 'PERSONAL' || isAdmin.value))
+const canManage = computed(() => !!activeBucket.value && (normalizeBucketType(activeBucket.value.bucket_type) === 'PERSONAL' || isAdmin.value))
 const canUpload = computed(() => !!activeBucket.value && (isOpen.value || auth.isAuthenticated()))
 
 async function loadBuckets() {
@@ -61,15 +62,26 @@ async function loadBuckets() {
   error.value = ''
   try {
     const { data: response } = await api.get<BucketsResponse>('/api/buckets/')
-    buckets.value = response.buckets || []
+    const availableBuckets = (response.buckets || []).map(bucket => ({
+      ...bucket,
+      // Backend enum values are serialized as lowercase (e.g. `open`).
+      // Normalize once so all UI checks use a consistent representation.
+      bucket_type: normalizeBucketType(bucket.bucket_type),
+    }))
+    // Guests must only see public OPEN storage, even if the API returns a broader list.
+    buckets.value = auth.isAuthenticated()
+      ? availableBuckets
+      : availableBuckets.filter(bucket => normalizeBucketType(bucket.bucket_type) === 'OPEN')
     const requested = typeof route.query.bucket === 'string' ? route.query.bucket : ''
     const requestedBucket = buckets.value.find(bucket => bucket.id === requested || bucket.bucket_type.toLowerCase() === requested.toLowerCase())
-    const preferred = requestedBucket || buckets.value.find(bucket => bucket.bucket_type === 'PERSONAL') || buckets.value.find(bucket => bucket.bucket_type === 'OPEN')
-    activeBucketId.value = preferred?.id || ''
+    // Do not silently select an arbitrary bucket on first visit.
+    // An empty activeBucketId means "nothing selected", not "no buckets exist".
+    activeBucketId.value = requestedBucket?.id || ''
     if (activeBucketId.value) await loadFiles()
     else {
+      // Buckets may exist without an active selection. This is not an error:
+      // the user can choose one from the bucket tabs below.
       data.value = null
-      error.value = 'Для этого аккаунта пока нет доступных хранилищ.'
     }
   } catch (e) {
     error.value = errorMessage(e)
@@ -179,8 +191,13 @@ async function saveRename() {
 }
 
 onMounted(async () => {
+  // An expired token should degrade gracefully to guest access, not block OPEN buckets.
   if (auth.isAuthenticated() && !auth.user) {
-    try { await auth.fetchMe() } catch { auth.logout(); router.push('/login') ; return }
+    try {
+      await auth.fetchMe()
+    } catch {
+      auth.logout()
+    }
   }
   await loadBuckets()
 })
@@ -198,52 +215,70 @@ watch(() => route.query.bucket, async (next) => {
   <AppShell>
     <div class="files-page">
       <div class="page-heading">
-        <div><h1>Файловое хранилище</h1><p class="muted">Все ваши файлы и хранилища в одном месте.</p></div>
-        <button class="secondary-button refresh-btn" @click="loadBuckets" :disabled="loading || bucketsLoading"><RefreshCw :size="16" :class="{ spinning: loading || bucketsLoading }" /> Обновить</button>
+        <div><p class="eyebrow">HOME PORTAL</p><h1>Файловое пространство</h1><p class="muted">Все ваши файлы и хранилища в одном месте.</p></div>
+        <button class="btn btn-outline-secondary secondary-button refresh-btn" @click="loadBuckets" :disabled="loading || bucketsLoading"><RefreshCw :size="16" :class="{ spinning: loading || bucketsLoading }" /> Обновить</button>
       </div>
 
       <div class="bucket-tabs" v-if="buckets.length">
         <button v-for="bucket in buckets" :key="bucket.id" :class="{ selected: activeBucketId === bucket.id }" @click="chooseBucket(bucket)">
-          <Globe2 v-if="bucket.bucket_type === 'OPEN'" :size="17" /><HardDrive v-else :size="17" />
+          <Globe2 v-if="normalizeBucketType(bucket.bucket_type) === 'OPEN'" :size="17" /><HardDrive v-else :size="17" />
           {{ bucket.name }}
-          <span class="access-pill">{{ bucket.bucket_type }}</span>
+          <span class="access-pill">{{ normalizeBucketType(bucket.bucket_type) }}</span>
         </button>
       </div>
 
       <section class="storage-panel" v-if="activeBucket">
         <div class="storage-top">
           <div class="storage-icon"><FolderOpen :size="22" /></div>
-          <div class="storage-info"><h2>{{ activeBucket.name }}</h2><p>{{ activeBucket.bucket_type }} · {{ isOpen ? 'Общий доступ' : 'Личное хранилище' }}</p></div>
+          <div class="storage-info"><h2>{{ activeBucket.name }}</h2><p>{{ normalizeBucketType(activeBucket.bucket_type) }} · {{ isOpen ? 'Общий доступ' : 'Личное хранилище' }}</p></div>
           <span class="status-dot"><i></i> {{ isOpen ? 'Доступно гостям' : 'Только вы' }}</span>
         </div>
         <div class="storage-stats">
           <div><span>Файлов</span><strong>{{ files.length }}</strong></div>
           <div><span>Занято</span><strong>{{ formatBytes(totalBytes) }}</strong></div>
-          <div><span>Тип хранилища</span><strong>{{ activeBucket.bucket_type }}</strong></div>
+          <div><span>Тип хранилища</span><strong>{{ normalizeBucketType(activeBucket.bucket_type) }}</strong></div>
         </div>
       </section>
+
+      <div v-if="error" class="alert alert-danger alert-error"><span>{{ error }}</span><button @click="error = ''"><X :size="16" /></button></div>
+      <div v-if="notice" class="alert alert-success"><span>{{ notice }}</span><button @click="notice = ''"><X :size="16" /></button></div>
 
       <section class="file-section">
         <div class="file-toolbar">
           <div><h2>Содержимое</h2><p class="muted">{{ filteredFiles.length }} {{ filteredFiles.length === 1 ? 'элемент' : 'элементов' }}</p></div>
           <div class="toolbar-actions">
             <label class="search-box"><Search :size="17" /><input v-model="search" placeholder="Найти файл..." /></label>
-            <button class="icon-button" title="Изменить сортировку" @click="sortNewest = !sortNewest"><ArrowUpDown :size="17" /></button>
+            <button class="btn btn-outline-secondary icon-button" title="Изменить сортировку" @click="sortNewest = !sortNewest"><ArrowUpDown :size="17" /></button>
             <input ref="fileInput" type="file" multiple hidden @change="uploadSelected" />
-            <button v-if="canUpload" class="primary-button upload-button" @click="fileInput?.click()" :disabled="uploading || !activeBucketId"><LoaderCircle v-if="uploading" class="spinning" :size="17" /><Upload v-else :size="17" /> {{ uploading ? 'Загрузка…' : 'Загрузить' }}</button>
-            <RouterLink v-else to="/login" class="primary-button upload-button">Войти для загрузки</RouterLink>
+            <button v-if="canUpload" class="btn btn-primary primary-button upload-button" @click="fileInput?.click()" :disabled="uploading || !activeBucketId"><LoaderCircle v-if="uploading" class="spinning" :size="17" /><Upload v-else :size="17" /> {{ uploading ? 'Загрузка…' : 'Загрузить' }}</button>
+            <RouterLink v-else to="/login" class="btn btn-primary primary-button upload-button">Войти для загрузки</RouterLink>
           </div>
         </div>
 
-        <div v-if="loading || bucketsLoading" class="state-box"><LoaderCircle class="spinning" :size="25" /><span>Загружаем хранилища и файлы…</span></div>
+        <div v-if="!loading && !bucketsLoading && buckets.length > 0 && !activeBucket" class="bucket-prompt">
+          <div class="empty-icon"><HardDrive :size="28" /></div>
+          <h3>Хранилище не выбрано</h3>
+          <p>Доступные хранилища есть. Выберите одно из них выше, чтобы открыть файлы.</p>
+          <div class="bucket-prompt-list">
+            <button v-for="bucket in buckets" :key="bucket.id" class="btn btn-outline-primary" @click="chooseBucket(bucket)">
+              <HardDrive :size="16" /> {{ bucket.name }}
+            </button>
+          </div>
+        </div>
+        <div v-else-if="!loading && !bucketsLoading && buckets.length === 0" class="bucket-prompt">
+          <div class="empty-icon"><HardDrive :size="28" /></div>
+          <h3>Хранилищ пока нет</h3>
+          <p>Для этого аккаунта ещё не создано ни одного доступного хранилища.</p>
+        </div>
+        <div v-else-if="loading || bucketsLoading" class="state-box"><LoaderCircle class="spinning" :size="25" /><span>Загружаем хранилища и файлы…</span></div>
         <div v-else-if="!error && filteredFiles.length === 0" class="empty-state">
           <div class="empty-icon"><FolderOpen :size="30" /></div>
           <h3>{{ search ? 'Ничего не найдено' : 'Здесь пока пусто' }}</h3>
           <p>{{ search ? 'Попробуйте изменить поисковый запрос.' : 'Загрузите первый файл в это хранилище.' }}</p>
-          <button v-if="!search && canUpload && activeBucketId" class="secondary-button" @click="fileInput?.click()"><Upload :size="16" /> Выбрать файлы</button>
+          <button v-if="!search && canUpload && activeBucketId" class="btn btn-outline-secondary secondary-button" @click="fileInput?.click()"><Upload :size="16" /> Выбрать файлы</button>
         </div>
         <div v-else-if="!error" class="file-table-wrap">
-          <table class="file-table">
+          <table class="table table-hover align-middle mb-0 file-table">
             <thead><tr><th>ИМЯ</th><th>РАЗМЕР</th><th>ИЗМЕНЁН</th><th></th></tr></thead>
             <tbody>
               <tr v-for="file in filteredFiles" :key="file.filename">
@@ -269,8 +304,8 @@ watch(() => route.query.bucket, async (next) => {
       <div v-if="renameTarget" class="modal-backdrop" @click.self="renameTarget = null">
         <form class="modal-card" @submit.prevent="saveRename">
           <h3>Переименовать файл</h3><p class="muted">{{ renameTarget.filename }}</p>
-          <input v-model="newName" class="text-input" autofocus required />
-          <div class="modal-actions"><button type="button" class="secondary-button" @click="renameTarget = null">Отмена</button><button class="primary-button">Сохранить</button></div>
+          <input v-model="newName" class="form-control text-input" autofocus required />
+          <div class="modal-actions"><button type="button" class="btn btn-outline-secondary secondary-button" @click="renameTarget = null">Отмена</button><button class="btn btn-primary primary-button">Сохранить</button></div>
         </form>
       </div>
     </div>

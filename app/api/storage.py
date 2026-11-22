@@ -16,8 +16,7 @@ from db.database import get_db
 from db.models.bucket import Buckets, BucketType
 from db.models.user import User, AccountType
 
-from core.user.getters import get_optional_user
-from api.user import get_current_user
+from core.user.getters import get_current_user, get_optional_user
 
 from storage.minio_client import (
     create_bucket,
@@ -61,18 +60,25 @@ async def get_bucket_or_404(
 # Получение доступных бакетов текущего пользователя
 @router.get("/")
 async def get_user_buckets(
-    current_user: User = Depends(get_current_user),
+    current_user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    query = select(Buckets).where(
-        or_(
-            Buckets.bucket_type == BucketType.OPEN,
-            and_(
-                Buckets.bucket_type == BucketType.PERSONAL,
-                Buckets.owner_id == current_user.id,
-            ),
+    # Гости видят только OPEN. Авторизованные пользователи дополнительно
+    # видят собственные PERSONAL-бакеты.
+    if current_user is None:
+        query = select(Buckets).where(
+            Buckets.bucket_type == BucketType.OPEN
         )
-    )
+    else:
+        query = select(Buckets).where(
+            or_(
+                Buckets.bucket_type == BucketType.OPEN,
+                and_(
+                    Buckets.bucket_type == BucketType.PERSONAL,
+                    Buckets.owner_id == current_user.id,
+                ),
+            )
+        )
 
     result = await db.execute(query)
     buckets = result.scalars().all()

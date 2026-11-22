@@ -6,12 +6,12 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     // The workspace is the only application page. The root is a smart entry point.
-    { path: '/', redirect: () => localStorage.getItem('hp_access_token') ? '/app' : '/login' },
+    { path: '/', redirect: '/app' },
     { path: '/app', name: 'files', component: FilesView },
     { path: '/login', name: 'login', component: LoginView },
     // Registration is intentionally not available in this version.
     { path: '/register', redirect: '/login' },
-    { path: '/:pathMatch(.*)*', redirect: () => localStorage.getItem('hp_access_token') ? '/app' : '/login' }
+    { path: '/:pathMatch(.*)*', redirect: '/app' }
   ],
   scrollBehavior() {
     return { top: 0 }
