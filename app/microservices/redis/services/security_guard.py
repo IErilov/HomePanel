@@ -1,9 +1,9 @@
 from fastapi import Request, Depends, HTTPException
 from redis.asyncio import Redis
 
-from core.redis import get_redis
 from core.user.getters import get_optional_user
 from db.models.user import User
+from microservices.redis.core.redis import get_redis
 from microservices.redis.core.security import SecurityService
 
 

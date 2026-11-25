@@ -19,7 +19,7 @@ services:
       - backend
 
 include:
-  - ./app/microservice/events/events.yml
+  - ./microservices/events/events.yml
 
 networks:
   backend:

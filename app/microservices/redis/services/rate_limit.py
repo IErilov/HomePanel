@@ -1,6 +1,6 @@
 from fastapi import Depends, Request, HTTPException
 from redis.asyncio import Redis
-from core.redis import get_redis
+from microservices.redis.core.redis import get_redis
 
 
 class RateLimiter:

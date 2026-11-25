@@ -1,5 +1,8 @@
+
 import uuid
 from redis.asyncio import Redis
+
+from microservices.redis.core.redis import redis_client
 
 
 class EventPublisher:
@@ -13,7 +16,7 @@ class EventPublisher:
         bucket_id: str,
         object_name: str | None = None,
         file_size: int = 0,
-        status: str = "SUCCESS"
+        status: str = "SUCCESS",
     ):
         event = {
             "event_id": str(uuid.uuid4()),
@@ -22,10 +25,27 @@ class EventPublisher:
             "bucket_id": bucket_id,
             "object_name": object_name or "",
             "file_size": str(file_size),
-            "status": status
+            "status": status,
         }
 
-        await self.redis.xadd(
-            "events:stream",
-            event
-        )
+        await self.redis.xadd("events:stream", event)
+
+
+async def publish_event(
+    event_type: str,
+    user_id: str | None,
+    bucket_id: str,
+    object_name: str | None = None,
+    file_size: int = 0,
+    status: str = "SUCCESS",
+):
+    publisher = EventPublisher(redis_client)
+
+    await publisher.publish(
+        event_type=event_type,
+        user_id=user_id,
+        bucket_id=bucket_id,
+        object_name=object_name,
+        file_size=file_size,
+        status=status,
+    )

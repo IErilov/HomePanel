@@ -1,7 +1,7 @@
 from enum import Enum as PyEnum
 
 from sqlalchemy import String, Boolean, Enum
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from db.database import Base
 
@@ -42,9 +42,6 @@ class User(Base):
         default=False,
     )
 
-    events: Mapped[list["Events"]] = relationship(
-        back_populates="user"
-    )
 
     def __str__(self) -> str:
         return f"{self.name} ({self.email})"

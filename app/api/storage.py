@@ -1,3 +1,4 @@
+
 import uuid
 
 from fastapi import (
@@ -7,6 +8,7 @@ from fastapi import (
     HTTPException,
     UploadFile,
 )
+from microservices.events.publisher import publish_event
 from pydantic import BaseModel, Field
 from sqlalchemy import select, or_, and_
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,7 +28,6 @@ from storage.minio_client import (
     delete_file,
     rename_file,
     check_upload_size,
-    
 )
 
 router = APIRouter(
@@ -56,6 +57,26 @@ async def get_bucket_or_404(
         )
 
     return bucket
+
+
+async def publish_storage_event(
+    event_type: str,
+    user_id: str | None,
+    bucket_id: str,
+    object_name: str | None = None,
+    file_size: int = 0,
+):
+    try:
+        await publish_event(
+            event_type=event_type,
+            user_id=user_id,
+            bucket_id=bucket_id,
+            object_name=object_name,
+            file_size=file_size,
+            status="SUCCESS",
+        )
+    except Exception as e:
+        print(f"Event publishing failed: {e}")
 
 
 @router.get("/")
@@ -204,7 +225,6 @@ async def create_user_bucket(
     }
 
 
-
 @router.post("/{bucket_id}/upload")
 async def upload_file(
     bucket_id: uuid.UUID,
@@ -212,7 +232,6 @@ async def upload_file(
     current_user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    
     if not file.filename:
         raise HTTPException(
             status_code=400,
@@ -242,7 +261,7 @@ async def upload_file(
             status_code=413,
             detail="Превышена квота хранилища",
         )
-    
+
     success = upload_to_minio(file, bucket.s3_name)
 
     if not success:
@@ -251,13 +270,20 @@ async def upload_file(
             detail="Ошибка загрузки в MinIO",
         )
 
+    await publish_storage_event(
+        event_type="UPLOAD",
+        user_id=str(current_user.id) if current_user else None,
+        bucket_id=str(bucket.id),
+        object_name=file.filename,
+        file_size=file_size,
+    )
+
     return {
         "filename": file.filename,
         "bucket": bucket.name,
         "bucket_id": str(bucket.id),
         "file_size": file_size,
     }
-
 
 
 @router.get("/{bucket_id}/files")
@@ -306,6 +332,13 @@ async def download_file(
             detail="Файл не найден",
         )
 
+    await publish_storage_event(
+        event_type="DOWNLOAD",
+        user_id=str(current_user.id) if current_user else None,
+        bucket_id=str(bucket.id),
+        object_name=filename,
+    )
+
     return file_stream
 
 
@@ -330,13 +363,23 @@ async def remove_bucket_file(
             detail="Ошибка удаления файла",
         )
 
+    await publish_storage_event(
+        event_type="DELETE",
+        user_id=str(current_user.id),
+        bucket_id=str(bucket.id),
+        object_name=filename,
+    )
+
     return {
         "message": "Файл удалён",
         "filename": filename,
     }
 
 
-@router.patch("/{bucket_id}/files/{filename:path}", dependencies=[Depends(rate_limit_for_bucket())])
+@router.patch(
+    "/{bucket_id}/files/{filename:path}",
+    dependencies=[Depends(rate_limit_for_bucket())],
+)
 async def rename_bucket_file(
     bucket_id: uuid.UUID,
     filename: str,
@@ -371,6 +414,13 @@ async def rename_bucket_file(
             status_code=500,
             detail="Ошибка переименования файла",
         )
+
+    await publish_storage_event(
+        event_type="RENAME",
+        user_id=str(current_user.id),
+        bucket_id=str(bucket.id),
+        object_name=new_filename,
+    )
 
     return {
         "message": "Файл переименован",

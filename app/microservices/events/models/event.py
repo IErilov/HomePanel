@@ -1,17 +1,27 @@
-from enum import Enum as PyEnum
+
 import uuid
+from enum import Enum as PyEnum
 
 from sqlalchemy import String, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from events.core.database import Base
-from db.models.bucket import BucketType
+from core.database import Base
+
+
+class BucketType(str, PyEnum):
+    PERSONAL = "personal"
+    SOCIAL = "social"
+    MEDIA = "media"
+    OPEN = "open"
+    UNKNOWN = "unknown"
 
 
 class EventType(PyEnum):
     UPLOAD = "upload"
     DELETE = "delete"
     DOWNLOAD = "download"
+    RENAME = "rename"
+
 
 class EventStatus(PyEnum):
     SUCCESS = "success"
@@ -28,12 +38,7 @@ class Events(Base):
     )
 
     user_id: Mapped[uuid.UUID | None] = mapped_column(
-        ForeignKey("users.id"),
         nullable=True
-    )
-
-    user: Mapped["User | None"] = relationship(
-        back_populates="events"
     )
 
     bucket_name: Mapped[str] = mapped_column(
@@ -42,8 +47,8 @@ class Events(Base):
     )
 
     bucket_type: Mapped[BucketType] = mapped_column(
-            Enum(BucketType, name="bucket_type"),
-            nullable=False,
+        Enum(BucketType, name="bucket_type"),
+        nullable=False,
     )
 
     event_type: Mapped[EventType] = mapped_column(
@@ -57,6 +62,7 @@ class Events(Base):
     )
 
     object_name: Mapped[str] = mapped_column(
+        String,
         nullable=False,
     )
 

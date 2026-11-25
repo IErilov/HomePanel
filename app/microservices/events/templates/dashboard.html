@@ -4,20 +4,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Service</title>
-    <link rel="stylesheet" href="/static/css/dashboard.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-</head>
-<body>
 
+    <title>Event Service — Dashboard</title>
+
+    <link rel="stylesheet" href="/static/css/dashboard.css">
+</head>
+
+<body>
 <div class="layout">
+
     <aside class="sidebar">
         <h2>Event<span>Service</span></h2>
 
         <nav>
             <a class="active" href="#overview">Overview</a>
             <a href="#events">Event Logs</a>
-            <a href="#traffic">Traffic</a>
         </nav>
 
         <div class="sidebar-footer">
@@ -27,20 +28,25 @@
     </aside>
 
     <main>
+
         <header>
             <div>
                 <h1>Dashboard</h1>
                 <p>System activity and event monitoring</p>
             </div>
+
             <div class="status">
-                <span></span> Service Online
+                <span></span>
+                Service Online
             </div>
         </header>
 
+        <!-- Overview -->
         <section id="overview">
             <h2>Overview</h2>
 
             <div class="cards">
+
                 <article class="card">
                     <p>Total Events</p>
                     <h2 id="total-events">—</h2>
@@ -60,38 +66,40 @@
                     <p>Failed Events</p>
                     <h2 id="failed">—</h2>
                 </article>
+
             </div>
         </section>
 
-        <section id="traffic">
-            <h2>Traffic</h2>
-            <div class="chart-container">
-                <canvas id="traffic-chart"></canvas>
-            </div>
-        </section>
-
+        <!-- Event Logs -->
         <section id="events">
+
             <h2>Recent Events</h2>
 
             <div class="filters">
+
                 <select id="event-type">
                     <option value="">All events</option>
-                    <option value="UPLOAD">Upload</option>
-                    <option value="DOWNLOAD">Download</option>
-                    <option value="DELETE">Delete</option>
+                    <option value="upload">Upload</option>
+                    <option value="download">Download</option>
+                    <option value="delete">Delete</option>
+                    <option value="rename">Rename</option>
                 </select>
 
                 <select id="event-status">
                     <option value="">All statuses</option>
-                    <option value="SUCCESS">Success</option>
-                    <option value="FAILED">Failed</option>
-                    <option value="DENIED">Denied</option>
+                    <option value="success">Success</option>
+                    <option value="failed">Failed</option>
+                    <option value="denied">Denied</option>
                 </select>
 
-                <button onclick="loadEvents()">Filter</button>
+                <button type="button" onclick="loadEvents()">
+                    Apply filters
+                </button>
+
             </div>
 
             <div class="table-container">
+
                 <table>
                     <thead>
                         <tr>
@@ -103,17 +111,22 @@
                             <th>Date</th>
                         </tr>
                     </thead>
+
                     <tbody id="events-table">
                         <tr>
-                            <td colspan="6">Loading...</td>
+                            <td colspan="6">Loading events...</td>
                         </tr>
                     </tbody>
                 </table>
+
             </div>
+
         </section>
+
     </main>
 </div>
 
 <script src="/static/js/dashboard.js"></script>
+
 </body>
 </html>

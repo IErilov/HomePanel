@@ -1,74 +1,94 @@
-from sqlalchemy import func, select
-from sqlalchemy.ext.asyncio import AsyncSession
-
+from datetime import datetime
 import uuid
 
-from repo.event import EventRepository
-from models.event import EventType
-from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from models.event import EventStatus, EventType
+from repo.event import EventsRepository
+
 
 class Stats:
     def __init__(self, db: AsyncSession):
-            self.db = db
-            self.repository = EventRepository(db)
+        self.db = db
+        self.repository = EventsRepository(db)
 
+    async def get_general_stats(
+        self, start: datetime | None = None, end: datetime | None = None
+    ):
+        if start is not None and end is not None and start > end:
+            raise ValueError("start must be earlier than or equal to end")
 
-    async def get_general_stats(self, start: datetime, end: datetime):
-            download = await self.repository.count_events_by_type(event_type=EventType.DOWNLOAD, start=start, end=end)
-            delete = await self.repository.count_events_by_type(event_type=EventType.DELETE, start=start, end=end)
-            upload = await self.repository.count_events_by_type(event_type=EventType.UPLOAD, start=start, end=end)
-    
-            all_events = await self.repository.count_events(start=start, end=end)
-    
-            return {
-                    "download": download,
-                    "upload": upload,
-                    "delete": delete,
-                    "all_events": all_events
-                   }
-
-    async def get_user_stats_pro(self, user_id: uuid, start: datetime, end: datetime):
-            download = await self.repository.count_events_by_type_by_user(EventType.DOWNLOAD, start, end, user_id)
-            upload = await self.repository.count_events_by_type_by_user(EventType.UPLOAD, start, end, user_id)
-            delete = await self.repository.count_events_by_type_by_user(EventType.DELETE, start, end, user_id)
-
-            all_events = await self.repository.count_events_by_users(user_id, start, end )
-            one = all_events/100
-
-            downloadREit = one * download
-            uploadREit = one * upload
-            deleteREit = one * delete
-
-            return  {
-                        "download %": downloadREit,
-                        "upload %": uploadREit,
-                        "delete %": deleteREit,
-                    }
-
-
-    
-    async def get_user_stats(self, user_id: uuid, start: datetime, end: datetime):
-            events = await self.repository.count_events_by_users(user_id, start, end)
-            upload = await self.repository.get_uploaded_size_by_user(user_id, start, end)
-            download = await self.repository.get_download_size_by_user(user_id, start, end)
-            delete = await self.repository.count_events_by_type_by_user(user_id, start, end, )
-
-            return {
-                        "events": events,
-                        "download": download,
-                        "upload": upload,
-                        "delete": delete,
-                    }
-
-    async def get_bucket_statistics(self, bucket_name: str, start: datetime, end: datetime):
-        all_events = await self.repository.count_events_by_bucket(bucket_name, start, end)
-        download = await self.repository.count_events_by_type_by_bucket(EventType.DOWNLOAD, start, end)
-        upload = await self.repository.count_events_by_type_by_bucket(EventType.UPLOAD, start, end)
-        delete = await self.repository.count_events_by_type_by_bucket(EventType.DELETE, start, end)
+        downloads = await self.repository.count_events_by_type(EventType.DOWNLOAD, start, end)
+        uploads = await self.repository.count_events_by_type(EventType.UPLOAD, start, end)
+        deletes = await self.repository.count_events_by_type(EventType.DELETE, start, end)
+        total = await self.repository.count_events(start, end)
+        failed = await self.repository.count_events_by_status(EventStatus.FAILED, start, end)
 
         return {
-                "download": download,
-                "upload": upload,
-                "delete": delete,
-                "all_events": all_events
-                }
+            "total_events": total,
+            "uploads": uploads,
+            "downloads": downloads,
+            "deletes": deletes,
+            "failed": failed,
+            # Keep the original response keys for clients that already use them.
+            "all_events": total,
+            "upload": uploads,
+            "download": downloads,
+            "delete": deletes,
+        }
+
+    async def get_user_statistics(
+        self, user_id: uuid.UUID, start: datetime | None = None, end: datetime | None = None
+    ):
+        events = await self.repository.count_events_by_users(user_id, start, end)
+        uploads = await self.repository.count_events_by_type_by_user(
+            EventType.UPLOAD, start, end, user_id
+        )
+        downloads = await self.repository.count_events_by_type_by_user(
+            EventType.DOWNLOAD, start, end, user_id
+        )
+        deletes = await self.repository.count_events_by_type_by_user(
+            EventType.DELETE, start, end, user_id
+        )
+        uploaded_size = await self.repository.get_uploaded_size_by_user(user_id, start, end)
+        downloaded_size = await self.repository.get_download_size_by_user(user_id, start, end)
+
+        denominator = events or 1
+        return {
+            "events": events,
+            "upload": uploads,
+            "download": downloads,
+            "delete": deletes,
+            "upload_percent": round(uploads / denominator * 100, 2),
+            "download_percent": round(downloads / denominator * 100, 2),
+            "delete_percent": round(deletes / denominator * 100, 2),
+            "uploaded_size": uploaded_size,
+            "downloaded_size": downloaded_size,
+        }
+
+    # Backward-compatible name used by older code.
+    async def get_user_stats(self, user_id, start=None, end=None):
+        return await self.get_user_statistics(user_id, start, end)
+
+    async def get_user_stats_pro(self, user_id, start=None, end=None):
+        return await self.get_user_statistics(user_id, start, end)
+
+    async def get_bucket_statistics(
+        self, bucket_name: str, start: datetime | None = None, end: datetime | None = None
+    ):
+        total = await self.repository.count_events_by_bucket(bucket_name, start, end)
+        downloads = await self.repository.count_events_by_type_by_bucket(
+            EventType.DOWNLOAD, start, end, bucket_name
+        )
+        uploads = await self.repository.count_events_by_type_by_bucket(
+            EventType.UPLOAD, start, end, bucket_name
+        )
+        deletes = await self.repository.count_events_by_type_by_bucket(
+            EventType.DELETE, start, end, bucket_name
+        )
+        return {
+            "download": downloads,
+            "upload": uploads,
+            "delete": deletes,
+            "all_events": total,
+        }
