@@ -4,7 +4,7 @@ import uuid
 from sqlalchemy import String, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from db.database import Base
+from events.core.database import Base
 from db.models.bucket import BucketType
 
 

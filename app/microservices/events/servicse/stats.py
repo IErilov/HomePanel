@@ -27,7 +27,7 @@ class Stats:
                     "all_events": all_events
                    }
 
-    async def get_user_stats(self, user_id: uuid, start: datetime, end: datetime):
+    async def get_user_stats_pro(self, user_id: uuid, start: datetime, end: datetime):
             download = await self.repository.count_events_by_type_by_user(EventType.DOWNLOAD, start, end, user_id)
             upload = await self.repository.count_events_by_type_by_user(EventType.UPLOAD, start, end, user_id)
             delete = await self.repository.count_events_by_type_by_user(EventType.DELETE, start, end, user_id)

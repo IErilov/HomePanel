@@ -18,6 +18,9 @@ services:
     networks:
       - backend
 
+include:
+  - ./app/microservice/events/events.yml
+
 networks:
   backend:
     external: true

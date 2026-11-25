@@ -1,0 +1,12 @@
+event_service:
+  build: ./event_service
+  container_name: event_service
+  environment:
+    REDIS_URL: redis://redis:6379
+  volumes:
+    - ./event_service/data:/app/data
+  ports:
+    - "8001:8001"
+  networks:
+    - backend
+  restart: unless-stopped
