@@ -6,6 +6,9 @@ from api.user import router as user_router
 import bcrypt
 from db.database import async_session, engine, Base
 from db.models.user import AccountType, User
+from db.models.user import User
+from microservices.events.models import event
+from core.redis import redis_client
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqladmin import Admin
@@ -13,6 +16,8 @@ from sqlalchemy import select
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    app.state.redis = redis_client
+    await app.state.redis.aclose()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     async with async_session() as db:

@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from repo.event import EventRepository
-from models.event import Events, EventType
+from models.event import Events
 
 from datetime import datetime
 from typing import List
@@ -55,18 +55,3 @@ class EventService:
             )
     
             return events
-
-    async def get_general_stats(self, start: datetime, end: datetime):
-        download = await self.repository.count_events_by_type(event_type=EventType.DOWNLOAD, start=start, end=end)
-        delete = await self.repository.count_events_by_type(event_type=EventType.DELETE, start=start, end=end)
-        upload = await self.repository.count_events_by_type(event_type=EventType.UPLOAD, start=start, end=end)
-
-        all_events = await self.repository.count_events(start=start, end=end)
-
-        return {
-                "download": download,
-                "upload": upload,
-                "delete": delete,
-                "all_events": all_events
-               }
-    

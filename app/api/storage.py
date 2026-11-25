@@ -1,4 +1,3 @@
-
 import uuid
 
 from fastapi import (
@@ -25,8 +24,9 @@ from storage.minio_client import (
     list_files,
     delete_file,
     rename_file,
+    check_upload_size,
+    
 )
-
 
 router = APIRouter(
     prefix="/api/buckets",
@@ -57,14 +57,11 @@ async def get_bucket_or_404(
     return bucket
 
 
-# Получение доступных бакетов текущего пользователя
 @router.get("/")
 async def get_user_buckets(
     current_user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Гости видят только OPEN. Авторизованные пользователи дополнительно
-    # видят собственные PERSONAL-бакеты.
     if current_user is None:
         query = select(Buckets).where(
             Buckets.bucket_type == BucketType.OPEN
@@ -206,6 +203,7 @@ async def create_user_bucket(
     }
 
 
+
 @router.post("/{bucket_id}/upload")
 async def upload_file(
     bucket_id: uuid.UUID,
@@ -213,15 +211,42 @@ async def upload_file(
     current_user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
+    # Проверяем имя файла
     if not file.filename:
         raise HTTPException(
             status_code=400,
             detail="У файла отсутствует имя",
         )
 
+    # Получаем бакет
     bucket = await get_bucket_or_404(bucket_id, db)
+
+    # Проверяем права загрузки
     check_write_access(bucket, current_user)
 
+    # Получаем размер файла
+    file_size = file.size
+
+    if file_size is None:
+        file_size = 0
+
+        while chunk := await file.read(1024 * 1024):
+            file_size += len(chunk)
+
+        await file.seek(0)
+
+    # Проверяем общую квоту бакета
+    if not check_upload_size(
+        file_size,
+        bucket.s3_name,
+        bucket.quota_bytes,
+    ):
+        raise HTTPException(
+            status_code=413,
+            detail="Превышена квота хранилища",
+        )
+
+    # Загружаем файл в MinIO
     success = upload_to_minio(file, bucket.s3_name)
 
     if not success:
@@ -234,7 +259,9 @@ async def upload_file(
         "filename": file.filename,
         "bucket": bucket.name,
         "bucket_id": str(bucket.id),
+        "file_size": file_size,
     }
+
 
 
 @router.get("/{bucket_id}/files")

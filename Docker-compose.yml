@@ -1,4 +1,4 @@
 include:
-  - ./frontend/docker-compose.yml
-  - ./app/docker-compose.yml
-  - ./infra/docker-compose.yml
+  - ./frontend/frontend.yml
+  - ./app/app.yml
+  - ./infra/infra.yml

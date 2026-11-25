@@ -73,21 +73,68 @@ class EventsRepository:
     
             return count
 
-    async def count_events_by_type(
-            self,
-            event_type: EventType,
-            start: datetime,
-            end: datetime) -> int:
+    async def count_events_by_users(self, start: datetime, end: datetime, user_id: uuid) -> int:
+            """Получает колличество ивентов у пользователей по пользователю"""
+            query = (select(func.count())
+                    .select_from(Events)
+                    .where(Events.created_at >= start, Events.created_at <= end)
+                    .where(Events.user_id == user_id))
+                
+            result = await self.db.execute(query)
+            count = result.scalar_one()
+            
+            return count
+
+    async def count_events_by_bucket(self, start: datetime, end: datetime, bucket_name: str) -> int:
+            """Получает колличество ивентов у пользователей по бакету"""
+            query = (select(func.count())
+                    .select_from(Events)
+                    .where(Events.created_at >= start, Events.created_at <= end)
+                    .where(Events.bucket_name == bucket_name))
+                          
+            result = await self.db.execute(query)
+            count = result.scalar_one()
+                          
+            return count
+
+    async def count_events_by_type_by_user(self, event_type: EventType, start: datetime, end: datetime, user_id: uuid) -> int:
+            """Получает колличество ивентов по типу у пользователя"""
             query = (select(func.count())
                     .select_from(Events)
                     .where(Events.event_type == event_type)
-                    .where(Events.created_at >= start,
-                            Events.created_at <= end))
+                    .where(Events.created_at >= start,Events.created_at <= end)
+                    .where(Events.user_id == user_id))
             
             result = await self.db.execute(query)
             count = result.scalar_one()
             
             return count
+
+    async def count_events_by_type_by_bucket(self, event_type: EventType, start: datetime, end: datetime, bucket_name: str) -> int:
+                """Получает колличество ивентов по типу у бакета"""
+                query = (select(func.count())
+                        .select_from(Events)
+                        .where(Events.event_type == event_type)
+                        .where(Events.created_at >= start,Events.created_at <= end)
+                        .where(Events.bucket_name == bucket_name))
+                
+                result = await self.db.execute(query)
+                count = result.scalar_one()
+                
+                return count
+
+    async def count_events_by_type(self, event_type: EventType, start: datetime, end: datetime) -> int:
+                """Получает колличество ивентов по типу"""
+                query = (select(func.count())
+                        .select_from(Events)
+                        .where(Events.event_type == event_type)
+                        .where(Events.created_at >= start,
+                                Events.created_at <= end))
+                
+                result = await self.db.execute(query)
+                count = result.scalar_one()
+                
+                return count
 
     async def get_uploaded_size_by_user(self, start: datetime, end: datetime):
         query = (select(Events.user_id, func.sum(Events.file_size))
@@ -118,7 +165,7 @@ class EventsRepository:
                           Events.created_at <= end))
         result = await self.db.execute(query)
         size = result.scalar_one()
-        
+
         return size
 
     async def get_total_downloaded_size(self, start: datetime, end: datetime):

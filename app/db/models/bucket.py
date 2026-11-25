@@ -23,11 +23,14 @@ class Buckets(Base):
     owner_id: Mapped[uuid.UUID | None] = mapped_column(
         ForeignKey("users.id"), nullable=True
     )
-    quota_bytes: Mapped[int] = mapped_column(
-        BigInteger, default=100 * 1024 * 1024, nullable=False
-    )
 
     owner: Mapped["User"] = relationship("User")
+
+    quota_bytes: Mapped[int] = mapped_column(
+        BigInteger,
+        default=1024 * 1024 * 1024,
+        nullable=False
+    )
 
     @property
     def quota_mb(self) -> int:

@@ -7,5 +7,10 @@ services:
     restart: unless-stopped
     ports:
       - "5173:80"
-    depends_on:
-      - app
+    networks:
+      - backend
+
+networks:
+  backend:
+    external: true
+    name: backend

@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    container_name: app
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user_cafe:password_cafe@db:5432/cafe_database
+      REDIS_URL: redis://redis:6379
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: admin123
+      MINIO_SECRET_KEY: admin123
+      SECRET_KEY: kldlkasndanfi12in12in3ikndniash
+      ADMIN_SECRET_KEY: super-secret-admin-key
+      FIRST_ADMIN_NAME: admin
+      FIRST_ADMIN_PASSWORD: admin123
+      FIRST_ADMIN_EMAIL: admin@example.com
+    networks:
+      - backend
+
+networks:
+  backend:
+    external: true
+    name: backend
+        
+volumes:
+  postgres_data:
+  minio_data:

@@ -23,7 +23,6 @@ async def get_user_by_id(user_id: uuid.UUID, db: AsyncSession):
 
     return {"name": user.name, "adress": user.adress}
 
-
 async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: AsyncSession = Depends(get_db),

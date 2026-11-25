@@ -1,9 +1,9 @@
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy import Uuid, DateTime, func
 from datetime import datetime
 import os
 import uuid
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -11,7 +11,6 @@ DATABASE_URL = os.getenv(
 )
 
 engine = create_async_engine(DATABASE_URL, echo=True)
-
 async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 class Base(DeclarativeBase):
