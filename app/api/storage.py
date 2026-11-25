@@ -17,6 +17,7 @@ from db.models.user import User, AccountType
 
 from core.user.getters import get_current_user, get_optional_user
 
+from microservices.redis.services.rate_limit import rate_limit_for_bucket
 from storage.minio_client import (
     create_bucket,
     upload_to_minio,
@@ -158,7 +159,7 @@ def check_manage_access(
     )
 
 
-@router.post("/")
+@router.post("/", dependencies=[Depends(rate_limit_for_bucket())])
 async def create_user_bucket(
     name: str,
     bucket_type: BucketType,
@@ -211,20 +212,17 @@ async def upload_file(
     current_user: User | None = Depends(get_optional_user),
     db: AsyncSession = Depends(get_db),
 ):
-    # Проверяем имя файла
+    
     if not file.filename:
         raise HTTPException(
             status_code=400,
             detail="У файла отсутствует имя",
         )
 
-    # Получаем бакет
     bucket = await get_bucket_or_404(bucket_id, db)
 
-    # Проверяем права загрузки
     check_write_access(bucket, current_user)
 
-    # Получаем размер файла
     file_size = file.size
 
     if file_size is None:
@@ -235,7 +233,6 @@ async def upload_file(
 
         await file.seek(0)
 
-    # Проверяем общую квоту бакета
     if not check_upload_size(
         file_size,
         bucket.s3_name,
@@ -245,8 +242,7 @@ async def upload_file(
             status_code=413,
             detail="Превышена квота хранилища",
         )
-
-    # Загружаем файл в MinIO
+    
     success = upload_to_minio(file, bucket.s3_name)
 
     if not success:
@@ -340,7 +336,7 @@ async def remove_bucket_file(
     }
 
 
-@router.patch("/{bucket_id}/files/{filename:path}")
+@router.patch("/{bucket_id}/files/{filename:path}", dependencies=[Depends(rate_limit_for_bucket())])
 async def rename_bucket_file(
     bucket_id: uuid.UUID,
     filename: str,

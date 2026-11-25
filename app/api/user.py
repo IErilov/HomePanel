@@ -10,7 +10,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from core.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
-
+from microservices.redis.services.rate_limit import rate_limit_for_user_login, rate_limit_for_user_create
 router = APIRouter(
     prefix="/api/users",
     tags=["User API"],
@@ -29,7 +29,7 @@ def create_access_token(data: dict) -> str:
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-@router.post("/create")
+@router.post("/create", dependencies=[Depends(rate_limit_for_user_create())])
 async def custom_create_user(
     name: str,
     password: str,
@@ -62,7 +62,7 @@ async def custom_create_user(
     }
 
 
-@router.post("/login")
+@router.post("/login", dependencies=[Depends(rate_limit_for_user_login())])
 async def login(
     form_data: OAuth2PasswordRequestForm = Depends(),
     db: AsyncSession = Depends(get_db),

@@ -9,10 +9,12 @@ from db.models.user import AccountType, User
 from db.models.user import User
 from microservices.events.models import event
 from core.redis import redis_client
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqladmin import Admin
 from sqlalchemy import select
+from microservices.redis.services.rate_limit import rate_limit
+from microservices.redis.services.security_guard import security_guard
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -49,7 +51,10 @@ async def lifespan(app: FastAPI):
 
     yield
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    dependencies=[Depends(rate_limit(limit=120, window=60)), Depends(security_guard)],
+    lifespan=lifespan
+    )
 
 app.add_middleware(
     CORSMiddleware,

@@ -53,7 +53,7 @@ class Stats:
             download = await self.repository.get_download_size_by_user(user_id, start, end)
             delete = await self.repository.count_events_by_type_by_user(user_id, start, end, )
 
-            return  {
+            return {
                         "events": events,
                         "download": download,
                         "upload": upload,
