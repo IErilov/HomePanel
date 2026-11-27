@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% set active = "api" %}
+{% block title %}{{ endpoint.name }} — HomePanel API{% endblock %}
+{% block content %}
+<section class="endpoint-hero wrap">
+  <div class="breadcrumbs"><a href="/documentation/">Documentation</a><span>/</span><a href="/documentation/api-reference">API Reference</a><span>/</span><span>{{ endpoint.name }}</span></div>
+  <div class="endpoint-title-row"><span class="method method-{{ endpoint.method|lower }} large-method">{{ endpoint.method }}</span><h1>{{ endpoint.name }}</h1></div>
+  <div class="path-box"><code>{{ endpoint.path }}</code><button class="copy-button" data-copy="{{ endpoint.path }}">Copy path</button></div>
+  <p class="endpoint-summary">{{ endpoint.summary }}</p>
+  <div class="endpoint-flags"><span class="flag">{{ "OAuth2 Bearer required" if endpoint.auth else "No authentication declared" }}</span><span class="flag">{{ endpoint.content_type or "No request body" }}</span></div>
+</section>
+<div class="wrap endpoint-layout">
+  <article class="endpoint-article">
+    <section class="content-section"><div class="eyebrow">OVERVIEW</div><h2>What it does</h2><p>{{ endpoint.purpose }}</p><div class="usage-callout"><b>When to use</b><p>{{ endpoint.when }}</p></div></section>
+    {% if endpoint.parameters %}
+    <section class="content-section"><div class="eyebrow">REQUEST</div><h2>Parameters</h2><div class="param-table">
+      {% for param in endpoint.parameters %}
+      <div class="param-row"><div class="param-name"><code>{{ param.name }}</code><span>{{ param.location }}</span></div><div class="param-info"><div><b>{{ param.type }}</b>{% if param.required %}<span class="required">REQUIRED</span>{% else %}<span class="optional">OPTIONAL</span>{% endif %}</div><p>{{ param.description }}</p>{% if param.enum %}<div class="enum-values">{% for value in param.enum %}<code>{{ value }}</code>{% endfor %}</div>{% endif %}</div></div>
+      {% endfor %}
+    </div></section>
+    {% endif %}
+    {% if endpoint.body %}
+    <section class="content-section"><div class="eyebrow">REQUEST BODY</div><h2>Body fields</h2><div class="param-table">
+      {% for field in endpoint.body %}
+      <div class="param-row"><div class="param-name"><code>{{ field.name }}</code><span>body</span></div><div class="param-info"><div><b>{{ field.type }}</b>{% if field.required %}<span class="required">REQUIRED</span>{% endif %}</div><p>{{ field.description }}</p></div></div>
+      {% endfor %}
+    </div></section>
+    {% endif %}
+    <section class="content-section"><div class="eyebrow">EXAMPLE</div><h2>Request example</h2><div class="code-card"><div class="code-card-head"><span>{{ endpoint.content_type or "HTTP" }}</span><button class="copy-button" data-copy="{{ endpoint.example|e }}">Copy</button></div><pre><code>{{ endpoint.example }}</code></pre></div></section>
+    <section class="content-section"><div class="eyebrow">RESPONSE</div><h2>Response</h2><p>{{ endpoint.response }}</p></section>
+    <section class="content-section"><div class="eyebrow">IMPLEMENTATION NOTES</div><h2>Important details</h2><ul class="notes-list">{% for note in endpoint.notes %}<li>{{ note }}</li>{% endfor %}</ul></section>
+    <a class="back-link" href="/documentation/api-reference">← Back to all endpoints</a>
+  </article>
+  <aside class="endpoint-aside"><div class="aside-card"><div class="sidebar-label">IN THIS ENDPOINT</div><a href="#top">Overview</a><a href="#top">Parameters</a><a href="#top">Request example</a><a href="#top">Response</a><div class="aside-divider"></div><div class="sidebar-label">AUTHENTICATION</div><p>{{ "Bearer token must be sent in Authorization header." if endpoint.auth else "The OpenAPI document does not declare security for this operation." }}</p></div></aside>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% set active = "home" %}
+{% block title %}HomePanel — Documentation{% endblock %}
+{% block content %}
+<section class="hero wrap">
+  <div class="hero-copy">
+    <div class="eyebrow"><span class="pulse"></span> DEVELOPER PORTAL <span class="eyebrow-line"></span> v1.0</div>
+    <h1>Build with<br><span>HomePanel API.</span></h1>
+    <p class="hero-lead">Документация backend-платформы HomePanel. Изучайте API, подключайте хранилища и интегрируйте работу с пользовательскими данными.</p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/documentation/api-reference">Explore API <span>→</span></a>
+      <a class="btn btn-ghost" href="https://github.com/IErilov/" target="_blank" rel="noopener noreferrer">View on GitHub ↗</a>
+    </div>
+    <div class="hero-meta"><span><i class="dot green"></i> API documentation</span><span><i class="dot blue"></i> FastAPI backend</span></div>
+  </div>
+  <div class="hero-visual">
+    <div class="visual-top"><span>HOME PANEL / API</span><span class="window-dots">● ● ●</span></div>
+    <div class="code-window">
+      <div class="code-line"><span class="ln">01</span><span class="syntax-purple">const</span> client = <span class="syntax-blue">new</span> HomePanel();</div>
+      <div class="code-line"><span class="ln">02</span></div>
+      <div class="code-line"><span class="ln">03</span><span class="syntax-muted">// Access your storage</span></div>
+      <div class="code-line"><span class="ln">04</span><span class="syntax-purple">const</span> buckets = <span class="syntax-purple">await</span> client</div>
+      <div class="code-line indent"><span class="syntax-yellow">.buckets</span>.<span class="syntax-green">list</span>();</div>
+      <div class="code-line"><span class="ln">05</span></div>
+      <div class="code-line"><span class="ln">06</span><span class="syntax-purple">await</span> client.<span class="syntax-yellow">files</span>.<span class="syntax-green">upload</span>(file);</div>
+      <div class="code-line"><span class="ln">07</span><span class="cursor"></span></div>
+    </div>
+    <div class="visual-bottom"><span><i class="dot green"></i> SERVICE READY</span><span>REST · JSON · OAuth2</span></div>
+    <div class="float-chip chip-one"><span class="chip-icon">↗</span><span><b>{{ endpoint_count }} endpoints</b><small>API reference</small></span></div>
+    <div class="float-chip chip-two"><span class="chip-icon chip-blue">⌘</span><span><b>FastAPI</b><small>Backend framework</small></span></div>
+  </div>
+</section>
+
+<section class="wrap section-block">
+  <div class="section-heading"><div><div class="eyebrow">START HERE</div><h2>Everything you need<br>to integrate.</h2></div><p>Выберите раздел документации, чтобы перейти к нужным методам и примерам запросов.</p></div>
+  <div class="feature-grid">
+    <a class="feature-card" href="/documentation/api-reference">
+      <div class="feature-icon purple-icon">⌘</div><div class="feature-kicker">01 / STORAGE</div>
+      <h3>Buckets & Storage</h3><p>Создание хранилищ, загрузка, скачивание, переименование и удаление файлов.</p><span class="card-link">Explore endpoints <b>↗</b></span>
+    </a>
+    <a class="feature-card" href="/documentation/api-reference#users">
+      <div class="feature-icon blue-icon">◎</div><div class="feature-kicker">02 / IDENTITY</div>
+      <h3>User API</h3><p>Создание учётной записи, авторизация и получение данных текущего пользователя.</p><span class="card-link">Explore endpoints <b>↗</b></span>
+    </a>
+    <a class="feature-card" href="/documentation/about">
+      <div class="feature-icon green-icon">↗</div><div class="feature-kicker">03 / PROJECT</div>
+      <h3>About the project</h3><p>Информация о разработчике, используемых технологиях и проектах.</p><span class="card-link">Meet the developer <b>↗</b></span>
+    </a>
+  </div>
+</section>
+
+<section class="wrap quickstart">
+  <div class="quick-copy"><div class="eyebrow">QUICK START</div><h2>Make your first request.</h2><p>Большинство методов работы с хранилищами требуют Bearer-токен. Передайте его в заголовке Authorization.</p><a href="/documentation/api-reference" class="text-link">Read API reference →</a></div>
+  <div class="terminal">
+    <div class="terminal-head"><span>TERMINAL</span><span>bash</span></div>
+    <pre><span class="term-muted">$</span> curl -X GET https://your-domain/api/buckets/ \
+  -H <span class="term-green">"Authorization: Bearer &lt;access_token&gt;"</span></pre>
+    <div class="terminal-foot"><span class="term-green">●</span> Example request · replace domain and token</div>
+  </div>
+</section>
+{% endblock %}

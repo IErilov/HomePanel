@@ -20,6 +20,7 @@ services:
 
 include:
   - ./microservices/events/events.yml
+  - ./microservices/Docs/docs.yml
 
 networks:
   backend:

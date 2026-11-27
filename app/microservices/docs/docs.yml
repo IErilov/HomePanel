@@ -1,0 +1,13 @@
+services:
+  documentation_service:
+    build: .
+    container_name: Documentation
+    expose:
+      - "8002"
+    networks:
+      - backend
+    restart: unless-stopped
+
+networks:
+  backend:
+    external: true

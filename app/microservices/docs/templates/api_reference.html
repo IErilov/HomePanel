@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% set active = "api" %}
+{% block title %}API Reference — HomePanel{% endblock %}
+{% block content %}
+<section class="page-hero wrap">
+  <div class="eyebrow">DOCUMENTATION / API</div>
+  <h1>API <span>Reference.</span></h1>
+  <p>Все опубликованные в OpenAPI методы HomePanel: назначение, параметры, авторизация и примеры вызовов.</p>
+  <div class="stats-row"><div><b>{{ endpoint_count }}</b><span>ENDPOINTS</span></div><div><b>2</b><span>GROUPS</span></div><div><b>REST</b><span>INTERFACE</span></div></div>
+</section>
+<div class="wrap docs-layout">
+  <aside class="docs-sidebar">
+    <div class="sidebar-label">ON THIS PAGE</div>
+    <a href="#storage">Buckets & Storage <span>07</span></a>
+    <a href="#users">User API <span>03</span></a>
+    <div class="sidebar-note"><b>Authentication</b><p>Защищённые методы используют заголовок <code>Authorization: Bearer</code>.</p></div>
+  </aside>
+  <div class="docs-content">
+    <div class="search-wrap"><span>⌕</span><input id="endpoint-search" type="search" placeholder="Search endpoints by name or path..." autocomplete="off"><kbd>⌘ K</kbd></div>
+    {% for group in groups %}
+    <section class="endpoint-group" id="{{ group.id }}">
+      <div class="group-heading"><div><div class="eyebrow">API GROUP</div><h2>{{ group.title }}</h2><p>{{ group.description }}</p></div><span class="group-count">{{ "%02d"|format(group.endpoints|length) }} METHODS</span></div>
+      <div class="endpoint-list">
+        {% for item in group.endpoints %}
+        <a class="endpoint-row" href="/documentation/api-reference/{{ item.slug }}" data-search="{{ (item.name ~ ' ' ~ item.path ~ ' ' ~ item.summary)|lower }}">
+          <span class="method method-{{ item.method|lower }}">{{ item.method }}</span>
+          <span class="endpoint-main"><b>{{ item.name }}</b><code>{{ item.path }}</code></span>
+          <span class="endpoint-arrow">↗</span>
+        </a>
+        {% endfor %}
+      </div>
+    </section>
+    {% endfor %}
+    <div id="no-results" class="empty-state" hidden>No endpoints found.</div>
+    <div class="schema-note"><b>Note about response schemas</b><p>Текущая OpenAPI-спецификация не содержит подробных JSON-схем успешных ответов. Поэтому документация не придумывает поля ответа — их нужно уточнять по реализации backend.</p></div>
+  </div>
+</div>
+{% endblock %}

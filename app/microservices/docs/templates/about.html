@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% set active = "about" %}
+{% block title %}About — HomePanel{% endblock %}
+{% block content %}
+<section class="about-hero wrap">
+  <div class="about-intro">
+    <div class="eyebrow">ABOUT THE DEVELOPER</div>
+    <div class="about-name-row"><div class="avatar">IE</div><div><h1>{{ profile.name }}</h1><div class="role">{{ profile.role }}</div></div></div>
+    <p class="about-lead">{{ profile.intro }}</p>
+    <div class="about-actions"><a class="btn btn-primary" href="{{ profile.github }}" target="_blank" rel="noopener noreferrer">GitHub profile ↗</a><span class="open-source"><i class="dot green"></i> Building in public</span></div>
+  </div>
+  <div class="about-side-card"><div class="side-card-top"><span>PROJECT NOTE</span><span>HP / 001</span></div><div class="quote-mark">“</div><p>{{ profile.about }}</p><div class="side-card-bottom"><span>HOMEPANEL</span><span>PERSONAL PROJECT</span></div></div>
+</section>
+<section class="wrap about-section">
+  <div class="section-heading compact"><div><div class="eyebrow">TECH STACK</div><h2>Tools I work with.</h2></div><p>Технологии, которые использую в разработке backend-сервисов и инфраструктуры.</p></div>
+  <div class="tech-grid">{% for tech in profile.technologies %}<div class="tech-card"><div class="tech-card-top"><span class="tech-symbol">{{ "%02d"|format(loop.index) }}</span><span class="tech-arrow">↗</span></div><h3>{{ tech.name }}</h3><p>{{ tech.description }}</p></div>{% endfor %}</div>
+</section>
+<section class="wrap about-section projects-section">
+  <div class="section-heading compact"><div><div class="eyebrow">SELECTED WORK</div><h2>Projects & experiments.</h2></div><p>Практические проекты, на которых проверяю идеи и развиваю инженерные навыки.</p></div>
+  <div class="project-list">{% for project in profile.projects %}<div class="project-row"><div class="project-index">{{ "%02d"|format(loop.index) }}</div><div class="project-copy"><h3>{{ project.name }}</h3><p>{{ project.description }}</p></div><span class="project-tag">{{ project.tag }}</span></div>{% endfor %}</div>
+</section>
+<section class="wrap about-bottom"><div><div class="eyebrow">LET'S CONNECT</div><h2>Follow the work.</h2><p>Исходный код проектов и новые эксперименты публикую на GitHub.</p></div><a class="btn btn-primary" href="{{ profile.github }}" target="_blank" rel="noopener noreferrer">Open GitHub ↗</a></section>
+{% endblock %}

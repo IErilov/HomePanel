@@ -1,6 +1,7 @@
+
 import asyncio
 import logging
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 
 from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
@@ -21,16 +22,21 @@ async def lifespan(app: FastAPI):
 
     consumer_task = asyncio.create_task(consume_events())
 
-    yield
-
-    consumer_task.cancel()
-
     try:
-        await consumer_task
-    except asyncio.CancelledError:
-        pass
+        yield
+    finally:
+        consumer_task.cancel()
 
-    await engine.dispose()
+        try:
+            await consumer_task
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            logging.warning(
+                "Redis consumer stopped with exception: %s", e
+            )
+
+        await engine.dispose()
 
 
 app = FastAPI(

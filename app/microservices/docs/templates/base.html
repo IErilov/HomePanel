@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1220">
+  <title>{% block title %}HomePanel Docs{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/documentation/static/css/style.css">
+</head>
+<body>
+<div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+<header class="topbar">
+  <a class="brand" href="/documentation/">
+    <span class="brand-mark">H</span>
+    <span class="brand-copy">HomePanel<small>DEVELOPER DOCUMENTATION</small></span>
+  </a>
+  <nav class="main-nav">
+    <a href="/documentation/" class="{% if active == 'home' %}active{% endif %}">Overview</a>
+    <a href="/documentation/api-reference" class="{% if active == 'api' %}active{% endif %}">API Reference</a>
+    <a href="/documentation/about" class="{% if active == 'about' %}active{% endif %}">About</a>
+    <a class="github-link" href="https://github.com/IErilov/" target="_blank" rel="noopener noreferrer">GitHub ↗</a>
+  </nav>
+</header>
+<main>{% block content %}{% endblock %}</main>
+<footer class="footer">
+  <span>HomePanel Documentation</span>
+  <span>Built for developers · <a href="https://github.com/IErilov/" target="_blank" rel="noopener noreferrer">GitHub ↗</a></span>
+</footer>
+<script src="/documentation/static/js/main.js"></script>
+</body>
+</html>
